@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="js/text2spec.js"></script>
+        <link rel="stylesheet" href="css/text2spec.css">
+    </head>
+    <body id="body">
+        <table id="mainTable">
+            <tr>
+                <td class="labelText" colspan="2">
+                    Enter text here
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2"> 
+                    <input type="text" id="inputtext">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button type="button" class="txButton" onclick="send();">Send TX</button>
+                </td>
+                <td>
+                    <button type="button" class="txAbortButton" onclick="sendAbort();">Abort TX</button>
+                </td>            
+            </tr>
+            <tr>
+                <td class="labelText" colspan="2">
+                    Text preview or paste images here
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <canvas id="inputcanvas" width="80" height="100" class="canvas"></canvas>
+                </td>
+            </tr>
+            <tr>
+                <td class="labelText" colspan="2"> 
+                TX spectrum monitor
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                <canvas id="specplotout" width="80" height="100" class="canvas"></canvas>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button type="button" class="rxButton" onclick="receive();">Start RX</button>
+                </td>
+                <td>
+                    <button type="button" class="rxStopButton" onclick="receiveStop();">Stop RX</button>
+                </td>        
+            </tr>
+            <tr>
+                <td class="labelText" colspan="2">
+                    RX spectrum
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <canvas id="specplotin" width="80" height="100" class="canvas"></canvas>
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>
+</html>
