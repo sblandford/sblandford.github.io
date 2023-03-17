@@ -79,6 +79,8 @@ function txSpectrum() {
     let drawVisual = null;
     let nudge = true;
     function drawSpectrum() {
+        if (!gTxRunning) {return;};
+            
         analyser.getByteFrequencyData(dataArray);
         
         if (nudge) {
@@ -134,6 +136,8 @@ function rxSpectrum (stream) {
     let drawVisual = null;
     let nudge = true;
     function drawSpectrum() {
+        if (!gRxRunning) {return;};
+        
         analyser.getByteFrequencyData(dataArray);
         
         if (nudge) {
@@ -249,6 +253,11 @@ function endEncode () {
     gPasted = false;
 }
 
+function endDecode () {
+    gRxAudioCtx.close();
+    gRxAudioCtx = null;   
+}
+
 function pasteImage(e) {
     if (e.clipboardData == false) {return false;}
     let imgs = e.clipboardData.items;
@@ -303,10 +312,31 @@ function reSizeElements () {
     }, gResizeHoldoffMs);
 }
 
+function buttonVisibilityService () {
+    // Check correct buttons are visible every 100ms and set
+    setInterval(function () {
+        if (gTxRunning) {
+            document.getElementById("txButton").style.visibility = "hidden";
+            document.getElementById("txAbortButton").style.visibility = "visible";            
+        } else {
+            document.getElementById("txButton").style.visibility = "visible";
+            document.getElementById("txAbortButton").style.visibility = "hidden";
+        }
+        if (gRxRunning) {
+            document.getElementById("rxButton").style.visibility = "hidden";
+            document.getElementById("rxStopButton").style.visibility = "visible";            
+        } else {
+            document.getElementById("rxButton").style.visibility = "visible";
+            document.getElementById("rxStopButton").style.visibility = "hidden";            
+        }
+    }, 100);
+}
+
 window.onload = function () {
     
     sizeElements();
-        
+    buttonVisibilityService ();
+
     window.addEventListener("keyup", textRender, true);
     window.addEventListener('paste', pasteImage);
     window.addEventListener("orientationchange", reSizeElements);
@@ -314,6 +344,8 @@ window.onload = function () {
     
     gTextCanvasCtx = gInputTextCanvasElem.getContext("2d", {willReadFrequently: true});
     
+    document.getElementById("txAbortButton").style.visibility = "hidden";
+    document.getElementById("rxStopButton").style.visibility = "hidden";
 }
 
 function send() {
@@ -324,11 +356,20 @@ function send() {
     txSpectrum();
     encode();
 }
+function sendAbort() {
+    if (!gTxRunning) {return;}
+    gTxRunning = false;
+}
+
 
 function receive() {
     if (gRxRunning) {return;}
     gRxRunning = true;
-    
     gRxAudioCtx = new AudioContext();
     grabMic();
+}
+function receiveStop() {
+    if (!gRxRunning) {return;}
+    gRxRunning = false;
+    endDecode();
 }
