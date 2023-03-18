@@ -1,5 +1,5 @@
 
-const gParams = {
+let gParams = {
     startFreqHz : {min : 200, max : 1000, default : 300, value : null},
     stopFreqHz : {min : 1010, max : 4500, default : 2300, value : null},
     resolution : {min : 10, max : 1000, default : 100, value : null},
@@ -32,17 +32,28 @@ let gTextPixSize = null;
 let gTxAudioCtx = null;
 let gRxAudioCtx = null;
 let gResizeBusy = false;
+let gParamUpdate = false;
 
-function paramsChange () {
-    // Add 10% of stop frequncy to display
-    gstopDispFreqHz = gParams.stopFreqHz.value + Math.floor(gParams.stopFreqHz.value / 10);
+function paramsReCalc () {
+
+
+    // Add 5% of stop frequncy to display
+    gstopDispFreqHz = gParams.stopFreqHz.value + Math.floor(gParams.stopFreqHz.value / 5);
     gMaxGain = 0.02;
     gFreqStep =  Math.floor((gParams.stopFreqHz.value - gParams.startFreqHz.value) / gParams.resolution.value);
     gTextPixSize = gParams.resolution.value;
 }
 
+function showParamsValues () {
+    document.getElementById("startFreqHzValue").textContent = gParams.startFreqHz.value;
+    document.getElementById("stopFreqHzValue").textContent = gParams.stopFreqHz.value;
+    document.getElementById("resolutionValue").textContent = gParams.resolution.value;
+    document.getElementById("scrollMsValue").textContent = gParams.scrollMs.value;
+    document.getElementById("gammaValue").textContent = gParams.gamma.value;
+    document.getElementById("freqInvertValue").textContent = (gParams.freqInvert.value)?1:0;
+    document.getElementById("scanReverseValue").textContent = (gParams.scanReverse.value)?1:0;
 
-
+}
 function resetParams () {
     // Iterate through the parameters and set values to default values
     for (const key in gParams) {
@@ -63,20 +74,63 @@ function getParams () {
         try {
             gParams = JSON.parse(paramsString);
         } catch(err) {
+            console.log(err);
             resetParams();
         }
     } else {
         resetParams();
     }
+    const startFreqHzElem = document.getElementById("startFreqHzSlide");
+    startFreqHzElem.min = gParams.startFreqHz.min;
+    startFreqHzElem.max = gParams.startFreqHz.max;
+    startFreqHzElem.value = gParams.startFreqHz.value;
+    const stopFreqHzElem = document.getElementById("stopFreqHzSlide");
+    stopFreqHzElem.min = gParams.stopFreqHz.min;
+    stopFreqHzElem.max = gParams.stopFreqHz.max;
+    stopFreqHzElem.value = gParams.stopFreqHz.value;
+    const resolutionElem = document.getElementById("resolutionSlide");
+    resolutionElem.min = gParams.resolution.min;
+    resolutionElem.max = gParams.resolution.max;
+    resolutionElem.value = gParams.resolution.value;
+    const scrollMsElem = document.getElementById("scrollMsSlide");
+    scrollMsElem.min = gParams.scrollMs.min;
+    scrollMsElem.max = gParams.scrollMs.max;
+    scrollMsElem.value = gParams.scrollMs.value;
+    const gammaElem = document.getElementById("gammaSlide");
+    gammaElem.min = gParams.gamma.min;
+    gammaElem.max = gParams.gamma.max;
+    gammaElem.value = gParams.gamma.value;
+    const freqInvertELem = document.getElementById("freqInvertSlide");
+    freqInvertELem.min = (gParams.freqInvert.min)?1:0;
+    freqInvertELem.max = (gParams.freqInvert.max)?1:0;
+    freqInvertELem.value = (gParams.freqInvert.value)?1:0;
+    const scanReverseELem = document.getElementById("scanReverseSlide");
+    scanReverseELem.min = (gParams.scanReverse.min)?1:0;
+    scanReverseELem.max = (gParams.scanReverse.max)?1:0;
+    scanReverseELem.value = (gParams.scanReverse.value)?1:0;
+}
+
+function changeParams () {
+    const previous = JSON.stringify(gParams);
+
+    gParams.startFreqHz.value = parseInt(document.getElementById("startFreqHzSlide").value);
+    gParams.stopFreqHz.value = parseInt(document.getElementById("stopFreqHzSlide").value);
+    gParams.resolution.value = parseInt(document.getElementById("resolutionSlide").value);
+    gParams.scrollMs.value = parseInt(document.getElementById("scrollMsSlide").value);
+    gParams.gamma.value = parseInt(document.getElementById("gammaSlide").value);
+    gParams.freqInvert.value = (parseInt(document.getElementById("freqInvertSlide").value) == 1);
+    gParams.scanReverse.value = (parseInt(document.getElementById("scanReverseSlide").value) == 1);
+
+    gParamUpdate = (previous !== JSON.stringify(gParams));
 }
 
 function sines(audioDestination) {
     
     // Allocate the oscillators
-    let phaseDelay = 0;
     gSignLevels = [];
-    let phaseCounter = 0;
-    for (let freq = gParams.startFreqHz.value; freq < gParams.stopFreqHz.value; freq += gFreqStep) {
+    for (let freq = gParams.startFreqHz.value, phaseCounter = 0;
+            freq < gParams.stopFreqHz.value && phaseCounter++ < gParams.resolution.value;
+            freq += gFreqStep) {
         // create Oscillator node
         const oscillator = gTxAudioCtx.createOscillator();
         const gainNode = gTxAudioCtx.createGain();
@@ -92,7 +146,7 @@ function sines(audioDestination) {
         // Start with random delays to mangle phase and avoid nasty clipping waveform
         setTimeout(function() {
                 oscillator.start();
-        }, (phaseCounter++ * Math.floor(gFreqStep / 3)) % gStartDelayMaxMs);
+        }, phaseCounter % gStartDelayMaxMs);
 
         gSignLevels.push(gainNode.gain);
     }
@@ -102,7 +156,7 @@ function txSpectrum() {
 
     const requiredFFtResolution = gTxAudioCtx.sampleRate / gFreqStep;
     const fftResolution = 1 << 31 - Math.clz32(requiredFFtResolution);
-    const fftStop = gstopDispFreqHz / (gTxAudioCtx.sampleRate / fftResolution);
+    const fftStop = Math.floor(gstopDispFreqHz / (gTxAudioCtx.sampleRate / fftResolution));
     
     const analyser = gTxAudioCtx.createAnalyser();
     analyser.fftSize = fftResolution;
@@ -132,8 +186,9 @@ function txSpectrum() {
             
             // Plot new spectrum line
             for (let y = 0; y < fftStop; y++) {
+                const index = (gParams.freqInvert.value)?y:(fftStop - y - 1);
                 const j = y * 4;
-                const level = dataArray[y] * gSpecScaleLevel;
+                const level = dataArray[index] * gSpecScaleLevel;
                 specImageData[j + 0] = level;
                 specImageData[j + 1] = level;
                 specImageData[j + 2] = level;
@@ -160,7 +215,7 @@ function rxSpectrum (stream) {
     
     const requiredFFtResolution = gRxAudioCtx.sampleRate / gFreqStep;
     const fftResolution = 1 << 31 - Math.clz32(requiredFFtResolution);
-    const fftStop = gstopDispFreqHz / (gRxAudioCtx.sampleRate / fftResolution);
+    const fftStop = Math.floor(gstopDispFreqHz / (gRxAudioCtx.sampleRate / fftResolution));
     
     const analyser = gRxAudioCtx.createAnalyser();
     mic.connect(analyser);
@@ -189,8 +244,9 @@ function rxSpectrum (stream) {
             
             // Plot new spectrum line
             for (let y = 0; y < fftStop; y++) {
+                const index = (gParams.freqInvert.value)?y:(fftStop - y - 1);
                 const j = y * 4;
-                const level = dataArray[y] * gSpecScaleLevel;
+                const level = dataArray[index] * gSpecScaleLevel;
                 specImageData[j + 0] = level;
                 specImageData[j + 1] = level;
                 specImageData[j + 2] = level;
@@ -255,8 +311,8 @@ function encode() {
                 // Create to grey using classic 0.3R, 0.59G, 0.11B luminority weighting
                 const greyLevel = ((scanLine.data[j] * 0.3) + (scanLine.data[j + 1] * 0.59 ) + (scanLine.data[j + 2]) * 0.11) / 255;
                 const gainVal = Math.pow(greyLevel, gParams.gamma.value);
-                // const logGain = 1- Math.pow(10, (0 - (gainVal * 0.2)));
-                gSignLevels[y].linearRampToValueAtTime(gainVal * gMaxGain, gTxAudioCtx.currentTime + (gParams.scrollMs.value / 1000));
+                const index = (gParams.freqInvert.value)?y:(gParams.resolution.value - y - 1);
+                gSignLevels[index].linearRampToValueAtTime(gainVal * gMaxGain, gTxAudioCtx.currentTime + (gParams.scrollMs.value / 1000));
             }
             nudge = false;
             if (gTxRunning) {
@@ -358,9 +414,19 @@ function reSizeElements () {
     }, gResizeHoldoffMs);
 }
 
-function buttonVisibilityService () {
-    // Check correct buttons are visible every 100ms and set
+function stateUpdateService () {
+    // Check display and engine state is up to date
     setInterval(function () {
+        if (gParamUpdate) {
+            setParams();
+            paramsReCalc();
+            showParamsValues();
+            gParamUpdate = false;
+        }
+        //if (gTXRunning || gRxRunning) {
+
+
+        //}
         if (gTxRunning) {
             document.getElementById("txButton").style.visibility = "hidden";
             document.getElementById("txAbortButton").style.visibility = "visible";            
@@ -379,9 +445,13 @@ function buttonVisibilityService () {
 }
 
 window.onload = function () {
-    
+
+    getParams();
+    paramsReCalc();
+
     sizeElements();
-    buttonVisibilityService ();
+    stateUpdateService ();
+    showParamsValues();
 
     window.addEventListener("keyup", textRender, true);
     window.addEventListener('paste', pasteImage);
@@ -420,5 +490,4 @@ function receiveStop() {
     endDecode();
 }
 
-getParams();
-paramsChange();
+

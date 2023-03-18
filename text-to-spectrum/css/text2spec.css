@@ -32,13 +32,13 @@
     color: white;
     background-color: black;
 }
-
 #mainTable {
     table-layout: fixed;
     width: 100%;
     background-color: black;
 }
-.labelText {
+
+.labelText, .paramValue {
     padding-top: 1em;
     text-align: left;
     font-weight: bold;
@@ -46,6 +46,13 @@
     font-size: 1.5em;
 }
 
+.labelText {
+    font-family: sans-serif;
+}
+
 .canvas {
      border:1px solid white;
+}
+.paramValue {
+    font-family: monospace;
 }
