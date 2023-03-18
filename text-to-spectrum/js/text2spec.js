@@ -168,6 +168,10 @@ function rxSpectrum (stream) {
 }
 
 function grabMic () {
+    navigator.getUserMedia = ( navigator.getUserMedia ||
+                       navigator.webkitGetUserMedia ||
+                       navigator.mozGetUserMedia ||
+                       navigator.msGetUserMedia );
     navigator.getUserMedia({video:false,audio:true},rxSpectrum,console.log);
 }
 
