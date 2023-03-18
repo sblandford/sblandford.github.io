@@ -220,10 +220,10 @@ function rxSpectrum (stream) {
     
     const mic = gRxAudioCtx.createMediaStreamSource(stream);
     
-    const requiredFFtResolution = gTxAudioCtx.sampleRate / gFreqStep;
+    const requiredFFtResolution = gRxAudioCtx.sampleRate / gFreqStep;
     const fftResolution = 1 << 31 - Math.clz32(requiredFFtResolution);
-    const fftStart = Math.floor(gstartDispFreqHz / (gTxAudioCtx.sampleRate / fftResolution));
-    const fftStop = Math.floor(gstopDispFreqHz / (gTxAudioCtx.sampleRate / fftResolution));
+    const fftStart = Math.floor(gstartDispFreqHz / (gRxAudioCtx.sampleRate / fftResolution));
+    const fftStop = Math.floor(gstopDispFreqHz / (gRxAudioCtx.sampleRate / fftResolution));
     const fftRange = fftStop - fftStart;
     
     const analyser = gRxAudioCtx.createAnalyser();
