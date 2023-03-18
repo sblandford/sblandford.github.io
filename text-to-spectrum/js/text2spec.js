@@ -1,7 +1,7 @@
 
 let gParams = {
     startFreqHz : {min : 200, max : 1000, default : 300, value : null},
-    stopFreqHz : {min : 1010, max : 4500, default : 2300, value : null},
+    stopFreqHz : {min : 1100, max : 4500, default : 2300, value : null},
     resolution : {min : 10, max : 1000, default : 100, value : null},
     scrollMs : {min : 10, max : 500, default : 50, value : null},
     gamma : {min : 0.2, max : 8, default : 4, value : null},
@@ -11,10 +11,12 @@ let gParams = {
 
 
 let gstopDispFreqHz = null;
+let gstartDispFreqHz = null;
 let gMaxGain = null;
 const gSpecScaleLevel = 1.4;
 const gStartDelayMaxMs = 250;
 const gResizeHoldoffMs = 200;
+const fftOversizePercent = 10;
 
 
 const gBoxWidthScale = 0.94;
@@ -37,8 +39,11 @@ let gParamUpdate = false;
 function paramsReCalc () {
 
 
-    // Add 5% of stop frequncy to display
-    gstopDispFreqHz = gParams.stopFreqHz.value + Math.floor(gParams.stopFreqHz.value / 5);
+    // Add % of frequncy to display
+    const freqRange = gParams.stopFreqHz.value - gParams.startFreqHz.value;
+    gstopDispFreqHz = gParams.stopFreqHz.value + Math.floor((freqRange * fftOversizePercent) / 100);
+    gstartDispFreqHz = gParams.startFreqHz.value - Math.floor((freqRange * fftOversizePercent) / 100);
+    if (gstartDispFreqHz < 0) {gstartDispFreqHz = 0;}
     gMaxGain = 0.02;
     gFreqStep =  Math.floor((gParams.stopFreqHz.value - gParams.startFreqHz.value) / gParams.resolution.value);
     gTextPixSize = gParams.resolution.value;
@@ -156,7 +161,9 @@ function txSpectrum() {
 
     const requiredFFtResolution = gTxAudioCtx.sampleRate / gFreqStep;
     const fftResolution = 1 << 31 - Math.clz32(requiredFFtResolution);
+    const fftStart = Math.floor(gstartDispFreqHz / (gTxAudioCtx.sampleRate / fftResolution));
     const fftStop = Math.floor(gstopDispFreqHz / (gTxAudioCtx.sampleRate / fftResolution));
+    const fftRange = fftStop - fftStart;
     
     const analyser = gTxAudioCtx.createAnalyser();
     analyser.fftSize = fftResolution;
@@ -167,9 +174,9 @@ function txSpectrum() {
     const dataArray = new Uint8Array(bufferLength);
     
     const canvasElem = document.getElementById("specplotout");
-    canvasElem.height = fftStop;
+    canvasElem.height = fftRange;
     const specCanvasCtx = canvasElem.getContext("2d", {willReadFrequently: true});
-    const specImageObj = specCanvasCtx.createImageData(1, fftStop);
+    const specImageObj = specCanvasCtx.createImageData(1, fftRange);
     const specImageData = specImageObj.data;
     
     let drawVisual = null;
@@ -185,8 +192,8 @@ function txSpectrum() {
             specCanvasCtx.putImageData(scrollImageObj, 0, 0);
             
             // Plot new spectrum line
-            for (let y = 0; y < fftStop; y++) {
-                const index = (gParams.freqInvert.value)?y:(fftStop - y - 1);
+            for (let y = 0; y < fftRange; y++) {
+                const index = ((gParams.freqInvert.value)?(y):(fftRange - y - 1 )) + fftStart;
                 const j = y * 4;
                 const level = dataArray[index] * gSpecScaleLevel;
                 specImageData[j + 0] = level;
@@ -213,9 +220,11 @@ function rxSpectrum (stream) {
     
     const mic = gRxAudioCtx.createMediaStreamSource(stream);
     
-    const requiredFFtResolution = gRxAudioCtx.sampleRate / gFreqStep;
+    const requiredFFtResolution = gTxAudioCtx.sampleRate / gFreqStep;
     const fftResolution = 1 << 31 - Math.clz32(requiredFFtResolution);
-    const fftStop = Math.floor(gstopDispFreqHz / (gRxAudioCtx.sampleRate / fftResolution));
+    const fftStart = Math.floor(gstartDispFreqHz / (gTxAudioCtx.sampleRate / fftResolution));
+    const fftStop = Math.floor(gstopDispFreqHz / (gTxAudioCtx.sampleRate / fftResolution));
+    const fftRange = fftStop - fftStart;
     
     const analyser = gRxAudioCtx.createAnalyser();
     mic.connect(analyser);
@@ -225,9 +234,9 @@ function rxSpectrum (stream) {
     const dataArray = new Uint8Array(bufferLength);
     
     const canvasElem = document.getElementById("specplotin");
-    canvasElem.height = fftStop;
+    canvasElem.height = fftRange;
     const specCanvasCtx = canvasElem.getContext("2d", {willReadFrequently: true});
-    const specImageObj = specCanvasCtx.createImageData(1, fftStop);
+    const specImageObj = specCanvasCtx.createImageData(1, fftRange);
     const specImageData = specImageObj.data;
     
     let drawVisual = null;
@@ -243,8 +252,8 @@ function rxSpectrum (stream) {
             specCanvasCtx.putImageData(scrollImageObj, 0, 0);
             
             // Plot new spectrum line
-            for (let y = 0; y < fftStop; y++) {
-                const index = (gParams.freqInvert.value)?y:(fftStop - y - 1);
+            for (let y = 0; y < fftRange; y++) {
+                const index = ((gParams.freqInvert.value)?(y):(fftRange - y - 1 )) + fftStart;
                 const j = y * 4;
                 const level = dataArray[index] * gSpecScaleLevel;
                 specImageData[j + 0] = level;
