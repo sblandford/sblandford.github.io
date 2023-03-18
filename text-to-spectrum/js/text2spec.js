@@ -1,45 +1,87 @@
 
-const gStartFreqHz = 300;
-const gStopFreqHz = 2300;
-const gstopDispFreqHz = 2700;
-const gResolution = 100;
-const gTextPixSize = gResolution;
-const gScrollMs = 50;
-const gMaxGain = 0.02;
+const gParams = {
+    startFreqHz : {min : 200, max : 1000, default : 300, value : null},
+    stopFreqHz : {min : 1010, max : 4500, default : 2300, value : null},
+    resolution : {min : 10, max : 1000, default : 100, value : null},
+    scrollMs : {min : 10, max : 500, default : 50, value : null},
+    gamma : {min : 0.2, max : 8, default : 4, value : null},
+    freqInvert : {min : false, max : true, default : false, value : null},
+    scanReverse : {min : false, max : true, default : false, value : null}
+};
+
+
+let gstopDispFreqHz = null;
+let gMaxGain = null;
 const gSpecScaleLevel = 1.4;
-const gGammaCorrection = 4;
 const gStartDelayMaxMs = 250;
+const gResizeHoldoffMs = 200;
+
 
 const gBoxWidthScale = 0.94;
-let gBoxWidth = window.innerWidth * gBoxWidthScale;
 let gTxRunning = false;
 let gRxRunning = false;
 let gSignLevels = [];
-const gFreqStep =  Math.floor((gStopFreqHz - gStartFreqHz) / gResolution);
-let gFftStop = 100;
+let gFreqStep =  null;
 let gPasted = false;
 
 let gInputTextCanvasElem = null;
 let gTextCanvasCtx = null;
 let gTextElem = null;
 let gTextMaxChars = 0;
-
+let gTextPixSize = null;
 let gTxAudioCtx = null;
 let gRxAudioCtx = null;
 let gResizeBusy = false;
-let gResizeHoldoffMs = 200;
+
+function paramsChange () {
+    // Add 10% of stop frequncy to display
+    gstopDispFreqHz = gParams.stopFreqHz.value + Math.floor(gParams.stopFreqHz.value / 10);
+    gMaxGain = 0.02;
+    gFreqStep =  Math.floor((gParams.stopFreqHz.value - gParams.startFreqHz.value) / gParams.resolution.value);
+    gTextPixSize = gParams.resolution.value;
+}
+
+
+
+function resetParams () {
+    // Iterate through the parameters and set values to default values
+    for (const key in gParams) {
+        if (gParams.hasOwnProperty(key)) {
+            gParams[key].value = gParams[key].default;
+        }
+    }
+    setParams();
+}
+
+function setParams () {
+    localStorage.setItem("text2specParms", JSON.stringify(gParams));
+}
+
+function getParams () {
+    let paramsString = localStorage.getItem("text2specParms");
+    if (paramsString) {
+        try {
+            gParams = JSON.parse(paramsString);
+        } catch(err) {
+            resetParams();
+        }
+    } else {
+        resetParams();
+    }
+}
 
 function sines(audioDestination) {
     
     // Allocate the oscillators
     let phaseDelay = 0;
     gSignLevels = [];
-    for (let freq = gStartFreqHz; freq < gStopFreqHz; freq += gFreqStep) {
+    let phaseCounter = 0;
+    for (let freq = gParams.startFreqHz.value; freq < gParams.stopFreqHz.value; freq += gFreqStep) {
         // create Oscillator node
         const oscillator = gTxAudioCtx.createOscillator();
         const gainNode = gTxAudioCtx.createGain();
       
-        oscillator.type = 'sine';
+        oscillator.type = "sine";
         oscillator.frequency.value = freq;
 
         gainNode.gain.value = 0;
@@ -50,7 +92,7 @@ function sines(audioDestination) {
         // Start with random delays to mangle phase and avoid nasty clipping waveform
         setTimeout(function() {
                 oscillator.start();
-        }, Math.floor(Math.random() * gStartDelayMaxMs) + 1);
+        }, (phaseCounter++ * Math.floor(gFreqStep / 3)) % gStartDelayMaxMs);
 
         gSignLevels.push(gainNode.gain);
     }
@@ -60,7 +102,7 @@ function txSpectrum() {
 
     const requiredFFtResolution = gTxAudioCtx.sampleRate / gFreqStep;
     const fftResolution = 1 << 31 - Math.clz32(requiredFFtResolution);
-    gFftStop = gstopDispFreqHz / (gTxAudioCtx.sampleRate / fftResolution);
+    const fftStop = gstopDispFreqHz / (gTxAudioCtx.sampleRate / fftResolution);
     
     const analyser = gTxAudioCtx.createAnalyser();
     analyser.fftSize = fftResolution;
@@ -71,9 +113,9 @@ function txSpectrum() {
     const dataArray = new Uint8Array(bufferLength);
     
     const canvasElem = document.getElementById("specplotout");
-    canvasElem.height = gFftStop;
+    canvasElem.height = fftStop;
     const specCanvasCtx = canvasElem.getContext("2d", {willReadFrequently: true});
-    const specImageObj = specCanvasCtx.createImageData(1, gFftStop);
+    const specImageObj = specCanvasCtx.createImageData(1, fftStop);
     const specImageData = specImageObj.data;
     
     let drawVisual = null;
@@ -89,7 +131,7 @@ function txSpectrum() {
             specCanvasCtx.putImageData(scrollImageObj, 0, 0);
             
             // Plot new spectrum line
-            for (let y = 0; y < gFftStop; y++) {
+            for (let y = 0; y < fftStop; y++) {
                 const j = y * 4;
                 const level = dataArray[y] * gSpecScaleLevel;
                 specImageData[j + 0] = level;
@@ -102,7 +144,7 @@ function txSpectrum() {
             if (gTxRunning) {
                 setTimeout(function() {
                     nudge = true;
-                }, gScrollMs);
+                }, gParams.scrollMs.value);
             }
         }
         
@@ -118,7 +160,7 @@ function rxSpectrum (stream) {
     
     const requiredFFtResolution = gRxAudioCtx.sampleRate / gFreqStep;
     const fftResolution = 1 << 31 - Math.clz32(requiredFFtResolution);
-    gFftStop = gstopDispFreqHz / (gRxAudioCtx.sampleRate / fftResolution);
+    const fftStop = gstopDispFreqHz / (gRxAudioCtx.sampleRate / fftResolution);
     
     const analyser = gRxAudioCtx.createAnalyser();
     mic.connect(analyser);
@@ -128,9 +170,9 @@ function rxSpectrum (stream) {
     const dataArray = new Uint8Array(bufferLength);
     
     const canvasElem = document.getElementById("specplotin");
-    canvasElem.height = gFftStop;
+    canvasElem.height = fftStop;
     const specCanvasCtx = canvasElem.getContext("2d", {willReadFrequently: true});
-    const specImageObj = specCanvasCtx.createImageData(1, gFftStop);
+    const specImageObj = specCanvasCtx.createImageData(1, fftStop);
     const specImageData = specImageObj.data;
     
     let drawVisual = null;
@@ -146,7 +188,7 @@ function rxSpectrum (stream) {
             specCanvasCtx.putImageData(scrollImageObj, 0, 0);
             
             // Plot new spectrum line
-            for (let y = 0; y < gFftStop; y++) {
+            for (let y = 0; y < fftStop; y++) {
                 const j = y * 4;
                 const level = dataArray[y] * gSpecScaleLevel;
                 specImageData[j + 0] = level;
@@ -159,7 +201,7 @@ function rxSpectrum (stream) {
             if (gRxRunning) {
                 setTimeout(function() {
                     nudge = true;
-                }, gScrollMs);
+                }, gParams.scrollMs.value);
             }
         }
         if (gRxRunning) {drawVisual = requestAnimationFrame(drawSpectrum);}
@@ -178,8 +220,8 @@ function grabMic () {
 function encode() {
     const endMarginPix = 10;
     
-    console.assert(gResolution == gSignLevels.length, "Resolution must match sign table length");
-    console.assert(gResolution == gInputTextCanvasElem.height, "Resolution must match text canvas height");
+    console.assert(gParams.resolution.value == gSignLevels.length, "Resolution must match sign table length");
+    console.assert(gParams.resolution.value == gInputTextCanvasElem.height, "Resolution must match text canvas height");
     let x = 0;
     let prevscan = false;
     
@@ -187,8 +229,8 @@ function encode() {
     let textEnd = 0;
     let pixActive = false;
     for (textEnd = gInputTextCanvasElem.width; ! pixActive && textEnd >= 0; --textEnd) {
-        let scanLine = gTextCanvasCtx.getImageData(textEnd, 0, 1, gResolution);
-        for (let y = 0; ! pixActive && y < gResolution; y++) {
+        let scanLine = gTextCanvasCtx.getImageData(textEnd, 0, 1, gParams.resolution.value);
+        for (let y = 0; ! pixActive && y < gParams.resolution.value; y++) {
             const j = y *4;
             pixActive = ((scanLine.data[j] + scanLine.data[j + 1] + scanLine.data[j + 2] + scanLine.data[j + 3]) > 0);
         }
@@ -204,23 +246,23 @@ function encode() {
     function scanText () {
         // Scroll spectrum across screen
         if (nudge) {
-            const scrollImageObj = gTextCanvasCtx.getImageData(1, 0, gInputTextCanvasElem.width, gResolution);
+            const scrollImageObj = gTextCanvasCtx.getImageData(1, 0, gInputTextCanvasElem.width, gParams.resolution.value);
             gTextCanvasCtx.putImageData(scrollImageObj, 0, 0);       
             // Get line to scan
-            let scanLine = gTextCanvasCtx.getImageData(0, 0, 1, gResolution);
-            for (let y = 0; y < gResolution; y++) {
+            let scanLine = gTextCanvasCtx.getImageData(0, 0, 1, gParams.resolution.value);
+            for (let y = 0; y < gParams.resolution.value; y++) {
                 const j = y *4;
                 // Create to grey using classic 0.3R, 0.59G, 0.11B luminority weighting
                 const greyLevel = ((scanLine.data[j] * 0.3) + (scanLine.data[j + 1] * 0.59 ) + (scanLine.data[j + 2]) * 0.11) / 255;
-                const gainVal = Math.pow(greyLevel, gGammaCorrection);
+                const gainVal = Math.pow(greyLevel, gParams.gamma.value);
                 // const logGain = 1- Math.pow(10, (0 - (gainVal * 0.2)));
-                gSignLevels[y].linearRampToValueAtTime(gainVal * gMaxGain, gTxAudioCtx.currentTime + (gScrollMs / 1000));
+                gSignLevels[y].linearRampToValueAtTime(gainVal * gMaxGain, gTxAudioCtx.currentTime + (gParams.scrollMs.value / 1000));
             }
             nudge = false;
             if (gTxRunning) {
                 setTimeout(function() {
                     nudge = true;
-                }, gScrollMs);
+                }, gParams.scrollMs.value);
             }
             if (--textEnd <= 0) {
                 gTxRunning = false;
@@ -287,20 +329,20 @@ function pasteImage(e) {
 }
 
 function sizeElements () {
-    gBoxWidth = window.innerWidth * gBoxWidthScale;
+    const boxWidth = window.innerWidth * gBoxWidthScale;
     
-    document.getElementById("specplotin").width = gBoxWidth;
+    document.getElementById("specplotin").width = boxWidth;
     document.getElementById("specplotin").style.backgroundColor = "black";
-    document.getElementById("specplotout").width = gBoxWidth;
+    document.getElementById("specplotout").width = boxWidth;
     document.getElementById("specplotout").style.backgroundColor = "black";
     
     gInputTextCanvasElem = document.getElementById("inputcanvas");
-    gInputTextCanvasElem.height = gResolution;
-    gInputTextCanvasElem.width = gBoxWidth;
+    gInputTextCanvasElem.height = gParams.resolution.value;
+    gInputTextCanvasElem.width = boxWidth;
     gInputTextCanvasElem.style.backgroundColor = "black";
     
     gTextElem = document.getElementById("inputtext");
-    gTextMaxChars = Math.floor((gBoxWidth / gTextPixSize) * 1.5);
+    gTextMaxChars = Math.floor((boxWidth / gTextPixSize) * 1.5);
     gTextElem.setAttribute('size', gTextMaxChars.toString());
   
 }
@@ -377,3 +419,6 @@ function receiveStop() {
     gRxRunning = false;
     endDecode();
 }
+
+getParams();
+paramsChange();
