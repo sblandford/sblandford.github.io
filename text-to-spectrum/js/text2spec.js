@@ -276,6 +276,10 @@ function grabMic () {
 function encode() {
     const endMarginPix = 10;
     
+    if (gTextElem.value !== "") {
+        textRender(false);
+    }
+
     console.assert(gParams.resolution.value == gSignLevels.length, "Resolution must match sign table length");
     console.assert(gParams.resolution.value == gInputTextCanvasElem.height, "Resolution must match text canvas height");
     let x = 0;
