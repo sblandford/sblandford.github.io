@@ -325,7 +325,7 @@ function encode() {
                 const greyLevel = ((scanLine.data[j] * 0.3) + (scanLine.data[j + 1] * 0.59 ) + (scanLine.data[j + 2]) * 0.11) / 255;
                 const gainVal = Math.pow(greyLevel, gParams.gamma.value);
                 const index = (gParams.freqInvert.value)?y:(gParams.resolution.value - y - 1);
-                gSignLevels[index].linearRampToValueAtTime(gainVal * gMaxGain, gTxAudioCtx.currentTime + (gParams.scrollMs.value / 1000));
+                gSignLevels[index].setTargetAtTime(gainVal * gMaxGain, gTxAudioCtx.currentTime + (gParams.scrollMs.value / 1000), gParams.scrollMs.value / 3000);
             }
             nudge = false;
             if (gTxRunning) {
