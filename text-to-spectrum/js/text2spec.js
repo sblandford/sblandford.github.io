@@ -1,12 +1,12 @@
 
 let gParams = {
-    startFreqHz : {min : 200, max : 1000, default : 300, value : null},
-    stopFreqHz : {min : 1100, max : 4500, default : 2300, value : null},
-    resolution : {min : 10, max : 1000, default : 100, value : null},
-    scrollMs : {min : 10, max : 500, default : 50, value : null},
-    gamma : {min : 0.2, max : 8, default : 4, value : null},
-    freqInvert : {min : false, max : true, default : false, value : null},
-    scanReverse : {min : false, max : true, default : false, value : null}
+    startFreqHz : {min : 200, max : 1000, step : 10, default : 300, value : null},
+    stopFreqHz : {min : 1100, max : 4500, step : 10, default : 2300, value : null},
+    resolution : {min : 10, max : 1000, step : 10, default : 100, value : null},
+    scrollMs : {min : 10, max : 500, step : 10, default : 50, value : null},
+    gamma : {min : 0.2, max : 8, step : 1, default : 4, value : null},
+    freqInvert : {min : false, max : true, step : 1, default : false, value : null},
+    scanReverse : {min : false, max : true, step : 1, default : false, value : null}
 };
 
 
@@ -59,6 +59,8 @@ function showParamsValues () {
     document.getElementById("scanReverseValue").textContent = (gParams.scanReverse.value)?1:0;
 
 }
+
+
 function resetParams () {
     // Iterate through the parameters and set values to default values
     for (const key in gParams) {
@@ -70,14 +72,22 @@ function resetParams () {
 }
 
 function setParams () {
-    localStorage.setItem("text2specParms", JSON.stringify(gParams));
+    let paramVals = {};
+    for (const key in gParams) {
+        if (gParams.hasOwnProperty(key)) {
+            paramVals[key] = {};
+            paramVals[key].value = gParams[key].value;
+        }
+    }
+    localStorage.setItem("text2specParms", JSON.stringify(paramVals));
 }
 
 function getParams () {
     let paramsString = localStorage.getItem("text2specParms");
+    let paramVals = {};
     if (paramsString) {
         try {
-            gParams = JSON.parse(paramsString);
+            paramVals = JSON.parse(paramsString);
         } catch(err) {
             console.log(err);
             resetParams();
@@ -85,25 +95,43 @@ function getParams () {
     } else {
         resetParams();
     }
+
+    // Fetch and validate keys
+    for (const key in gParams) {
+        if (gParams.hasOwnProperty(key)) {
+            let value = gParams[key].default;
+            if (!paramVals.hasOwnProperty(key) && (typeOf(paramVals[key].value) == typeOf(value))) {value = paramVals[key].value;}
+            if (value > gParams[key].max) {value = gParams[key].max;}
+            if (value < gParams[key].min) {value = gParams[key].min;}
+            gParams[key].value = Math.ceil(value / gParams[key].step) * gParams[key].step;
+        }
+    }
+
+    // Apply to control panel
     const startFreqHzElem = document.getElementById("startFreqHzSlide");
     startFreqHzElem.min = gParams.startFreqHz.min;
     startFreqHzElem.max = gParams.startFreqHz.max;
+    startFreqHzElem.step = gParams.startFreqHz.step;
     startFreqHzElem.value = gParams.startFreqHz.value;
     const stopFreqHzElem = document.getElementById("stopFreqHzSlide");
     stopFreqHzElem.min = gParams.stopFreqHz.min;
     stopFreqHzElem.max = gParams.stopFreqHz.max;
+    stopFreqHzElem.step = gParams.stopFreqHz.step;
     stopFreqHzElem.value = gParams.stopFreqHz.value;
     const resolutionElem = document.getElementById("resolutionSlide");
     resolutionElem.min = gParams.resolution.min;
     resolutionElem.max = gParams.resolution.max;
+    resolutionElem.step = gParams.resolution.step;
     resolutionElem.value = gParams.resolution.value;
     const scrollMsElem = document.getElementById("scrollMsSlide");
     scrollMsElem.min = gParams.scrollMs.min;
     scrollMsElem.max = gParams.scrollMs.max;
+    scrollMsElem.step = gParams.scrollMs.step;
     scrollMsElem.value = gParams.scrollMs.value;
     const gammaElem = document.getElementById("gammaSlide");
     gammaElem.min = gParams.gamma.min;
     gammaElem.max = gParams.gamma.max;
+    gammaElem.step = gParams.gamma.step;
     gammaElem.value = gParams.gamma.value;
     const freqInvertELem = document.getElementById("freqInvertSlide");
     freqInvertELem.min = (gParams.freqInvert.min)?1:0;
@@ -325,7 +353,7 @@ function encode() {
                 const greyLevel = ((scanLine.data[j] * 0.3) + (scanLine.data[j + 1] * 0.59 ) + (scanLine.data[j + 2]) * 0.11) / 255;
                 const gainVal = Math.pow(greyLevel, gParams.gamma.value);
                 const index = (gParams.freqInvert.value)?y:(gParams.resolution.value - y - 1);
-                gSignLevels[index].setTargetAtTime(gainVal * gMaxGain, gTxAudioCtx.currentTime + (gParams.scrollMs.value / 1000), gParams.scrollMs.value / 1500);
+                gSignLevels[index].setTargetAtTime(gainVal * gMaxGain, gTxAudioCtx.currentTime + (gParams.scrollMs.value / 1000), gParams.scrollMs.value / 4000);
             }
             nudge = false;
             if (gTxRunning) {
@@ -475,6 +503,10 @@ window.onload = function () {
     
     document.getElementById("txAbortButton").style.visibility = "hidden";
     document.getElementById("rxStopButton").style.visibility = "hidden";
+
+    /* document.getElementById("gammaSlide").addEventListener("input", () => {
+        console.log("boo");
+    }); */
 }
 
 function send() {

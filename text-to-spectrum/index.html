@@ -64,85 +64,87 @@
             </tr>
         </table>
         <div id="options">
-            <table id="optionsTable">
-                <tr>
-                    <td class="labelText">
-                        Start Frequency Hz
-                    </td>
-                    <td class="paramControl">
-                        <input type="range" min="1" max="100" value="50" class="slider" id="startFreqHzSlide" onchange="changeParams();">
-                    </td>
-                    <td class="paramValue">
-                        <span id="startFreqHzValue">-</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="labelText">
-                        Stop Frequency Hz
-                    </td>
-                    <td class="paramControl">
-                        <input type="range" min="1" max="100" value="50" class="slider" id="stopFreqHzSlide" onchange="changeParams();">
-                    </td>
-                    <td class="paramValue">
-                        <span id="stopFreqHzValue">-</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="labelText">
-                        Resolution
-                    </td>
-                    <td class="paramControl">
-                        <input type="range" min="1" max="100" value="50" class="slider" id="resolutionSlide" onchange="changeParams();">
-                    </td>
-                    <td class="paramValue">
-                        <span id="resolutionValue">-</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="labelText">
-                        Scroll step ms
-                    </td>
-                    <td class="paramControl">
-                        <input type="range" min="1" max="100" value="50" class="slider" id="scrollMsSlide" onchange="changeParams();">
-                    </td>
-                    <td class="paramValue">
-                        <span id="scrollMsValue">-</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="labelText">
-                        Spectrum Gamma
-                    </td>
-                    <td class="paramControl">
-                        <input type="range" min="1" max="100" value="50" class="slider" id="gammaSlide" onchange="changeParams();">
-                    </td>
-                    <td class="paramValue">
-                        <span id="gammaValue">-</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="labelText">
-                        Frequncy Invert
-                    </td>
-                    <td class="paramControl">
-                        <input type="range" min="0" max="1" value="0" class="slider" id="freqInvertSlide" onchange="changeParams();">
-                    </td>
-                    <td class="paramValue">
-                        <span id="freqInvertValue">-</span>
-                    </td>
-                </tr>
-                <tr style="display: none;">
-                    <td class="labelText">
-                        Scan Reverse
-                    </td>
-                    <td class="paramControl">
-                        <input type="range" min="1" max="100" value="50" class="slider" id="scanReverseSlide" onchange="changeParams();">
-                    </td>
-                    <td class="paramValue">
-                        <span id="scanReverseValue">-</span>
-                    </td>
-                </tr>
-            </table>
+            <form action="">
+                <table id="optionsTable">
+                    <tr>
+                        <td class="labelText">
+                            Start Frequency Hz
+                        </td>
+                        <td class="paramControl">
+                            <input type="range" min="1" max="100" value="50" class="slider" id="startFreqHzSlide" oninput="changeParams();">
+                        </td>
+                        <td class="paramValue">
+                            <span id="startFreqHzValue">-</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="labelText">
+                            Stop Frequency Hz
+                        </td>
+                        <td class="paramControl">
+                            <input type="range" min="1" max="100" value="50" class="slider" id="stopFreqHzSlide" oninput="changeParams();">
+                        </td>
+                        <td class="paramValue">
+                            <span id="stopFreqHzValue">-</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="labelText">
+                            Resolution
+                        </td>
+                        <td class="paramControl">
+                            <input type="range" min="1" max="100" value="50" class="slider" id="resolutionSlide" oninput="changeParams();">
+                        </td>
+                        <td class="paramValue">
+                            <span id="resolutionValue">-</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="labelText">
+                            Scroll step ms
+                        </td>
+                        <td class="paramControl">
+                            <input type="range" min="1" max="100" value="50" class="slider" id="scrollMsSlide" oninput="changeParams();">
+                        </td>
+                        <td class="paramValue">
+                            <span id="scrollMsValue">-</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="labelText">
+                            Spectrum Gamma
+                        </td>
+                        <td class="paramControl">
+                            <input type="range" min="1" max="100" value="50" class="slider" name="gammaSlide" id="gammaSlide" oninput="changeParams();">
+                        </td>
+                        <td class="paramValue">
+                            <span id="gammaValue">-</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="labelText">
+                            Frequncy Invert
+                        </td>
+                        <td class="paramControl">
+                            <input type="range" min="0" max="1" value="0" class="slider" id="freqInvertSlide" oninput="changeParams();">
+                        </td>
+                        <td class="paramValue">
+                            <span id="freqInvertValue">-</span>
+                        </td>
+                    </tr>
+                    <tr style="display: none;">
+                        <td class="labelText">
+                            Scan Reverse
+                        </td>
+                        <td class="paramControl">
+                            <input type="range" min="1" max="100" value="50" class="slider" id="scanReverseSlide" oninput="changeParams();">
+                        </td>
+                        <td class="paramValue">
+                            <span id="scanReverseValue">-</span>
+                        </td>
+                    </tr>
+                </table>
+            </form>
         </div>
     </body>
 </html>
