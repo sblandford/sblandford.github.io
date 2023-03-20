@@ -1,7 +1,7 @@
 
 let gParams = {
-    startFreqHz : {min : 200, max : 1000, step : 10, default : 300, value : null},
-    stopFreqHz : {min : 1100, max : 4500, step : 10, default : 2300, value : null},
+    startFreqHz : {min : 200, max : 1000, step : 100, default : 300, value : null},
+    stopFreqHz : {min : 1100, max : 4500, step : 100, default : 2300, value : null},
     resolution : {min : 10, max : 1000, step : 10, default : 100, value : null},
     scrollMs : {min : 10, max : 500, step : 10, default : 50, value : null},
     gamma : {min : 0.2, max : 8, step : 1, default : 4, value : null},
@@ -36,8 +36,6 @@ let gResizeBusy = false;
 let gParamUpdate = false;
 
 function paramsReCalc () {
-
-
     // Add % of frequncy to display
     const freqRange = gParams.stopFreqHz.value - gParams.startFreqHz.value;
     gstopDispFreqHz = gParams.stopFreqHz.value + Math.floor((freqRange * fftOversizePercent) / 100);
@@ -54,7 +52,7 @@ function showParamsValues () {
     document.getElementById("resolutionValue").textContent = gParams.resolution.value;
     document.getElementById("scrollMsValue").textContent = gParams.scrollMs.value;
     document.getElementById("gammaValue").textContent = gParams.gamma.value;
-    document.getElementById("freqInvertValue").textContent = (gParams.freqInvert.value)?1:0;
+    document.getElementById("freqInvertValue").textContent = (gParams.freqInvert.value)?"On":"Off";
     document.getElementById("scanReverseValue").textContent = (gParams.scanReverse.value)?1:0;
 
 }
@@ -383,6 +381,14 @@ function pasteImage(e) {
 function sizeElements () {
     const boxWidth = window.innerWidth * gBoxWidthScale;
     
+    /* const windowScale =  window.innerWidth / 800;
+    
+    document.body.style.transform = 'scale(' + windowScale + ')';
+    document.body.style['-o-transform'] = 'scale(' + windowScale + ')';
+    document.body.style['-webkit-transform'] = 'scale(' + windowScale + ')';
+    document.body.style['-moz-transform'] = 'scale(' + windowScale + ')'; */
+ 
+    
     document.getElementById("specplotin").width = boxWidth;
     document.getElementById("specplotin").style.backgroundColor = "black";
     document.getElementById("specplotout").width = boxWidth;
@@ -442,6 +448,8 @@ function stateUpdateService () {
 
 window.onload = function () {
 
+    
+    
     getParams();
     paramsReCalc();
 

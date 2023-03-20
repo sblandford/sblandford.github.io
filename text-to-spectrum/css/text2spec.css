@@ -56,3 +56,21 @@
 .paramValue {
     font-family: monospace;
 }
+
+.slider {
+    -webkit-appearance: none;
+    width: 90%;
+    height: 2em;
+    background: #000;
+    outline: none;
+    cursor: pointer;
+    border: 0.2em solid lawngreen;
+    border-radius: 0.2em;
+}
+
+.labelText, .paramValue {
+    padding: 0.0em;
+}
+.paramControl {
+    width: 60%;
+}
