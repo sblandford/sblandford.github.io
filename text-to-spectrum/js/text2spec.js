@@ -20,8 +20,7 @@ const fftOversizePercent = 10;
 
 
 const gBoxWidthScale = 0.94;
-let gTxRunning = false;
-let gRxRunning = false;
+let gRunning = {tx: false, rx: false}
 let gSignLevels = [];
 let gFreqStep =  null;
 let gPasted = false;
@@ -185,23 +184,21 @@ function sines(audioDestination) {
     }
 }
 
-function txSpectrum() {
-
-    const requiredFFtResolution = gTxAudioCtx.sampleRate / gFreqStep;
+function spectrogram(ctx, canvasName, mode) {
+    const requiredFFtResolution = ctx.sampleRate / gFreqStep;
     const fftResolution = 1 << 31 - Math.clz32(requiredFFtResolution);
-    const fftStart = Math.floor(gstartDispFreqHz / (gTxAudioCtx.sampleRate / fftResolution));
-    const fftStop = Math.floor(gstopDispFreqHz / (gTxAudioCtx.sampleRate / fftResolution));
+    const fftStart = Math.floor(gstartDispFreqHz / (ctx.sampleRate / fftResolution));
+    const fftStop = Math.floor(gstopDispFreqHz / (ctx.sampleRate / fftResolution));
     const fftRange = fftStop - fftStart;
     
-    const analyser = gTxAudioCtx.createAnalyser();
+    const analyser = ctx.createAnalyser();
     analyser.fftSize = fftResolution;
-    analyser.connect(gTxAudioCtx.destination);
+    analyser.connect(ctx.destination);
     const bufferLength = analyser.frequencyBinCount;
-    
-    sines(analyser);
+
     const dataArray = new Uint8Array(bufferLength);
     
-    const canvasElem = document.getElementById("specplotout");
+    const canvasElem = document.getElementById(canvasName);
     canvasElem.height = fftRange;
     const specCanvasCtx = canvasElem.getContext("2d", {willReadFrequently: true});
     const specImageObj = specCanvasCtx.createImageData(1, fftRange);
@@ -210,7 +207,7 @@ function txSpectrum() {
     let drawVisual = null;
     let nudge = true;
     function drawSpectrum() {
-        if (!gTxRunning) {return;};
+        if (!gRunning[mode]) {return;};
             
         analyser.getByteFrequencyData(dataArray);
         
@@ -231,75 +228,33 @@ function txSpectrum() {
             }
             specCanvasCtx.putImageData(specImageObj, canvasElem.width - 1, 0);
             nudge = false;
-            if (gTxRunning) {
+            if (gRunning[mode]) {
                 setTimeout(function() {
                     nudge = true;
                 }, gParams.scrollMs.value);
             }
         }
         
-        if (gTxRunning) {drawVisual = requestAnimationFrame(drawSpectrum);}
+        if (gRunning[mode]) {drawVisual = requestAnimationFrame(drawSpectrum);}
     }
-    drawVisual = requestAnimationFrame(drawSpectrum);    
+    drawVisual = requestAnimationFrame(drawSpectrum);
+    
+    return analyser;
+}
 
+function txSpectrum() {
+    
+    const analyserNode = spectrogram(gTxAudioCtx, "specplotout", "tx");
+    sines(analyserNode);
+    analyserNode.connect(gTxAudioCtx.destination);
 }
 
 function rxSpectrum (stream) {
     
     const mic = gRxAudioCtx.createMediaStreamSource(stream);
     
-    const requiredFFtResolution = gRxAudioCtx.sampleRate / gFreqStep;
-    const fftResolution = 1 << 31 - Math.clz32(requiredFFtResolution);
-    const fftStart = Math.floor(gstartDispFreqHz / (gRxAudioCtx.sampleRate / fftResolution));
-    const fftStop = Math.floor(gstopDispFreqHz / (gRxAudioCtx.sampleRate / fftResolution));
-    const fftRange = fftStop - fftStart;
-    
-    const analyser = gRxAudioCtx.createAnalyser();
-    mic.connect(analyser);
-    analyser.fftSize = fftResolution;
-    const bufferLength = analyser.frequencyBinCount;
-    
-    const dataArray = new Uint8Array(bufferLength);
-    
-    const canvasElem = document.getElementById("specplotin");
-    canvasElem.height = fftRange;
-    const specCanvasCtx = canvasElem.getContext("2d", {willReadFrequently: true});
-    const specImageObj = specCanvasCtx.createImageData(1, fftRange);
-    const specImageData = specImageObj.data;
-    
-    let drawVisual = null;
-    let nudge = true;
-    function drawSpectrum() {
-        if (!gRxRunning) {return;};
-        
-        analyser.getByteFrequencyData(dataArray);
-        
-        if (nudge) {
-            // Scroll spectrum across screen
-            const scrollImageObj = specCanvasCtx.getImageData(1, 0, canvasElem.width, canvasElem.height);
-            specCanvasCtx.putImageData(scrollImageObj, 0, 0);
-            
-            // Plot new spectrum line
-            for (let y = 0; y < fftRange; y++) {
-                const index = ((gParams.freqInvert.value)?(y):(fftRange - y - 1 )) + fftStart;
-                const j = y * 4;
-                const level = dataArray[index] * gSpecScaleLevel;
-                specImageData[j + 0] = level;
-                specImageData[j + 1] = level;
-                specImageData[j + 2] = level;
-                specImageData[j + 3] = 255;
-            }
-            specCanvasCtx.putImageData(specImageObj, canvasElem.width - 1, 0);
-            nudge = false;
-            if (gRxRunning) {
-                setTimeout(function() {
-                    nudge = true;
-                }, gParams.scrollMs.value);
-            }
-        }
-        if (gRxRunning) {drawVisual = requestAnimationFrame(drawSpectrum);}
-    }
-    drawVisual = requestAnimationFrame(drawSpectrum);     
+    const analyserNode = spectrogram(gRxAudioCtx, "specplotin", "rx");
+    mic.connect(analyserNode);
 }
 
 function grabMic () {
@@ -356,16 +311,16 @@ function encode() {
                 gSignLevels[index].setTargetAtTime(gainVal * gMaxGain, gTxAudioCtx.currentTime + (gParams.scrollMs.value / 1000), gParams.scrollMs.value / 4000);
             }
             nudge = false;
-            if (gTxRunning) {
+            if (gRunning.tx) {
                 setTimeout(function() {
                     nudge = true;
                 }, gParams.scrollMs.value);
             }
             if (--textEnd <= 0) {
-                gTxRunning = false;
+                gRunning.tx = false;
             }
         }
-        if (gTxRunning) {
+        if (gRunning.tx) {
             drawVisual = requestAnimationFrame(scanText);
         } else {
             endEncode();
@@ -464,18 +419,18 @@ function stateUpdateService () {
             showParamsValues();
             gParamUpdate = false;
         }
-        //if (gTXRunning || gRxRunning) {
+        //if (gTXRunning || gRunning.rx) {
 
 
         //}
-        if (gTxRunning) {
+        if (gRunning.tx) {
             document.getElementById("txButton").style.visibility = "hidden";
             document.getElementById("txAbortButton").style.visibility = "visible";            
         } else {
             document.getElementById("txButton").style.visibility = "visible";
             document.getElementById("txAbortButton").style.visibility = "hidden";
         }
-        if (gRxRunning) {
+        if (gRunning.rx) {
             document.getElementById("rxButton").style.visibility = "hidden";
             document.getElementById("rxStopButton").style.visibility = "visible";            
         } else {
@@ -510,28 +465,28 @@ window.onload = function () {
 }
 
 function send() {
-    if (gTxRunning) {return;}
-    gTxRunning = true;
+    if (gRunning.tx) {return;}
+    gRunning.tx = true;
     
     gTxAudioCtx = new AudioContext();
     txSpectrum();
     encode();
 }
 function sendAbort() {
-    if (!gTxRunning) {return;}
-    gTxRunning = false;
+    if (!gRunning.tx) {return;}
+    gRunning.tx = false;
 }
 
 
 function receive() {
-    if (gRxRunning) {return;}
-    gRxRunning = true;
+    if (gRunning.rx) {return;}
+    gRunning.rx = true;
     gRxAudioCtx = new AudioContext();
     grabMic();
 }
 function receiveStop() {
-    if (!gRxRunning) {return;}
-    gRxRunning = false;
+    if (!gRunning.rx) {return;}
+    gRunning.rx = false;
     endDecode();
 }
 
