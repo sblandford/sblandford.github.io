@@ -191,7 +191,6 @@ function spectrogram(ctx, canvasName, mode) {
     
     const analyser = ctx.createAnalyser();
     analyser.fftSize = fftResolution;
-    analyser.connect(ctx.destination);
     const bufferLength = analyser.frequencyBinCount;
 
     const dataArray = new Uint8Array(bufferLength);
