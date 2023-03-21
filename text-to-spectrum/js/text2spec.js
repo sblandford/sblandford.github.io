@@ -256,11 +256,29 @@ function rxSpectrum (stream) {
 }
 
 function grabMic () {
-    navigator.getUserMedia = ( navigator.getUserMedia ||
-                       navigator.webkitGetUserMedia ||
-                       navigator.mozGetUserMedia ||
-                       navigator.msGetUserMedia );
-    navigator.getUserMedia({video:false,audio:true},rxSpectrum,console.log);
+    // New method
+    if (typeof navigator.mediaDevices !== 'undefined') {
+        navigator.mediaDevices.getUserMedia({
+            video:false,
+            audio:true
+        }).then(rxSpectrum).catch(console.log);
+        return;
+    }
+    // Old-skool method
+    navigator.getUserMedia = (
+        navigator.getUserMedia ||
+        navigator.webkitGetUserMedia ||
+        navigator.mozGetUserMedia ||
+        navigator.msGetUserMedia
+    );
+    if (typeof navigator.getUserMedia !== 'undefined') {
+        navigator.getUserMedia({
+            video:false,
+            audio:true
+        }, rxSpectrum,console.log);
+    } else {
+        alert("Unable to find any media devices. Maybe needs SSL site or localhost.");
+    }
 }
 
 function encode() {
@@ -381,14 +399,6 @@ function pasteImage(e) {
 function sizeElements () {
     const boxWidth = window.innerWidth * gBoxWidthScale;
     
-    /* const windowScale =  window.innerWidth / 800;
-    
-    document.body.style.transform = 'scale(' + windowScale + ')';
-    document.body.style['-o-transform'] = 'scale(' + windowScale + ')';
-    document.body.style['-webkit-transform'] = 'scale(' + windowScale + ')';
-    document.body.style['-moz-transform'] = 'scale(' + windowScale + ')'; */
- 
-    
     document.getElementById("specplotin").width = boxWidth;
     document.getElementById("specplotin").style.backgroundColor = "black";
     document.getElementById("specplotout").width = boxWidth;
@@ -418,6 +428,8 @@ function reSizeElements () {
 
 function stateUpdateService () {
     // Check display and engine state is up to date
+    
+    let prevRunningState = false;
     setInterval(function () {
         if (gParamUpdate) {
             setParams();
@@ -425,10 +437,16 @@ function stateUpdateService () {
             showParamsValues();
             gParamUpdate = false;
         }
-        //if (gTXRunning || gRunning.rx) {
 
-
-        //}
+        let runningState = gRunning.tx || gRunning.rx;
+        if (runningState !== prevRunningState) {
+            let sliders = document.getElementsByClassName("slider"), numSliders = sliders.length;        
+            for (let i = 0; i < numSliders; i++) {
+                sliders[i].disabled = runningState;
+            }
+            prevRunningState = runningState;
+        }
+            
         if (gRunning.tx) {
             document.getElementById("txButton").style.visibility = "hidden";
             document.getElementById("txAbortButton").style.visibility = "visible";            
@@ -448,8 +466,6 @@ function stateUpdateService () {
 
 window.onload = function () {
 
-    
-    
     getParams();
     paramsReCalc();
 
@@ -467,9 +483,6 @@ window.onload = function () {
     document.getElementById("txAbortButton").style.visibility = "hidden";
     document.getElementById("rxStopButton").style.visibility = "hidden";
 
-    /* document.getElementById("gammaSlide").addEventListener("input", () => {
-        console.log("boo");
-    }); */
 }
 
 function send() {

@@ -61,11 +61,36 @@
     -webkit-appearance: none;
     width: 90%;
     height: 2em;
-    background: #000;
+    background: black;
     outline: none;
     cursor: pointer;
-    border: 0.2em solid lawngreen;
+    border: 0.2em solid darkgreen;
     border-radius: 0.2em;
+    margin: 2em;
+}
+.slider:disabled {
+    border: 0.2em solid grey;
+}
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: 2em; /* Set a specific slider handle width */
+  height: 4em; /* Slider handle height */
+  background: lawngreen; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+}
+.slider:disabled::-webkit-slider-thumb {
+    background: grey;
+}
+.slider::-moz-range-thumb {
+  width: 2em; /* Set a specific slider handle width */
+  height: 4em; /* Slider handle height */
+  background: lawngreen; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+}
+.slider:disabled::-moz-range-thumb {
+    background: grey;
 }
 
 .labelText, .paramValue {
@@ -74,3 +99,4 @@
 .paramControl {
     width: 60%;
 }
+
