@@ -1,10 +1,12 @@
 
 let gParams = {
+    textSize : {min : 0.2, max : 10, step : 0.2, default : 3, value : null},
+    textWidth : {min : 3, max : 100, step : 1, default : 20, value : null},
     startFreqHz : {min : 200, max : 1000, step : 100, default : 300, value : null},
     stopFreqHz : {min : 1100, max : 4500, step : 100, default : 2300, value : null},
     resolution : {min : 10, max : 1000, step : 10, default : 100, value : null},
     scrollMs : {min : 10, max : 500, step : 10, default : 50, value : null},
-    gamma : {min : 0.2, max : 8, step : 1, default : 4, value : null},
+    gamma : {min : 0.2, max : 8, step : 0.2, default : 4, value : null},
     freqInvert : {min : false, max : true, step : 1, default : false, value : null},
     scanReverse : {min : false, max : true, step : 1, default : false, value : null}
 };
@@ -47,11 +49,13 @@ function paramsReCalc () {
 }
 
 function showParamsValues () {
+    document.getElementById("textSizeValue").textContent = gParams.textSize.value.toFixed(1);
+    document.getElementById("textWidthValue").textContent = gParams.textWidth.value;
     document.getElementById("startFreqHzValue").textContent = gParams.startFreqHz.value;
     document.getElementById("stopFreqHzValue").textContent = gParams.stopFreqHz.value;
     document.getElementById("resolutionValue").textContent = gParams.resolution.value;
     document.getElementById("scrollMsValue").textContent = gParams.scrollMs.value;
-    document.getElementById("gammaValue").textContent = gParams.gamma.value;
+    document.getElementById("gammaValue").textContent = gParams.gamma.value.toFixed(1);
     document.getElementById("freqInvertValue").textContent = (gParams.freqInvert.value)?"On":"Off";
     document.getElementById("scanReverseValue").textContent = (gParams.scanReverse.value)?1:0;
 
@@ -97,7 +101,7 @@ function getParams () {
     for (const key in gParams) {
         if (gParams.hasOwnProperty(key)) {
             let value = gParams[key].default;
-            if (!paramVals.hasOwnProperty(key) && (typeOf(paramVals[key].value) == typeOf(value))) {value = paramVals[key].value;}
+            if (paramVals.hasOwnProperty(key) && (typeof(paramVals[key].value) == typeof(value))) {value = paramVals[key].value;}
             if (value > gParams[key].max) {value = gParams[key].max;}
             if (value < gParams[key].min) {value = gParams[key].min;}
             gParams[key].value = Math.ceil(value / gParams[key].step) * gParams[key].step;
@@ -105,6 +109,16 @@ function getParams () {
     }
 
     // Apply to control panel
+    const textSizeElem = document.getElementById("textSizeSlide");
+    textSizeElem.min = gParams.textSize.min;
+    textSizeElem.max = gParams.textSize.max;
+    textSizeElem.step = gParams.textSize.step;
+    textSizeElem.value = gParams.textSize.value;
+    const textWidthElem = document.getElementById("textWidthSlide");
+    textWidthElem.min = gParams.textWidth.min;
+    textWidthElem.max = gParams.textWidth.max;
+    textWidthElem.step = gParams.textWidth.step;
+    textWidthElem.value = gParams.textWidth.value;
     const startFreqHzElem = document.getElementById("startFreqHzSlide");
     startFreqHzElem.min = gParams.startFreqHz.min;
     startFreqHzElem.max = gParams.startFreqHz.max;
@@ -143,11 +157,13 @@ function getParams () {
 function changeParams () {
     const previous = JSON.stringify(gParams);
 
+    gParams.textSize.value = parseFloat(document.getElementById("textSizeSlide").value);
+    gParams.textWidth.value = parseFloat(document.getElementById("textWidthSlide").value);
     gParams.startFreqHz.value = parseInt(document.getElementById("startFreqHzSlide").value);
     gParams.stopFreqHz.value = parseInt(document.getElementById("stopFreqHzSlide").value);
     gParams.resolution.value = parseInt(document.getElementById("resolutionSlide").value);
     gParams.scrollMs.value = parseInt(document.getElementById("scrollMsSlide").value);
-    gParams.gamma.value = parseInt(document.getElementById("gammaSlide").value);
+    gParams.gamma.value = parseFloat(document.getElementById("gammaSlide").value);
     gParams.freqInvert.value = (parseInt(document.getElementById("freqInvertSlide").value) == 1);
     gParams.scanReverse.value = (parseInt(document.getElementById("scanReverseSlide").value) == 1);
 
@@ -155,7 +171,7 @@ function changeParams () {
 }
 
 function sines(audioDestination) {
-    
+
     // Allocate the oscillators
     gSignLevels = [];
     for (let freq = gParams.startFreqHz.value, phaseCounter = 0;
@@ -164,12 +180,12 @@ function sines(audioDestination) {
         // create Oscillator node
         const oscillator = gTxAudioCtx.createOscillator();
         const gainNode = gTxAudioCtx.createGain();
-      
+
         oscillator.type = "sine";
         oscillator.frequency.value = freq;
 
         gainNode.gain.value = 0;
-                
+
         oscillator.connect(gainNode);
         gainNode.connect(audioDestination);
 
@@ -188,31 +204,31 @@ function spectrogram(ctx, canvasName, mode) {
     const fftStart = Math.floor(gstartDispFreqHz / (ctx.sampleRate / fftResolution));
     const fftStop = Math.floor(gstopDispFreqHz / (ctx.sampleRate / fftResolution));
     const fftRange = fftStop - fftStart;
-    
+
     const analyser = ctx.createAnalyser();
     analyser.fftSize = fftResolution;
     const bufferLength = analyser.frequencyBinCount;
 
     const dataArray = new Uint8Array(bufferLength);
-    
+
     const canvasElem = document.getElementById(canvasName);
     canvasElem.height = fftRange;
     const specCanvasCtx = canvasElem.getContext("2d", {willReadFrequently: true});
     const specImageObj = specCanvasCtx.createImageData(1, fftRange);
     const specImageData = specImageObj.data;
-    
+
     let drawVisual = null;
     let nudge = true;
     function drawSpectrum() {
         if (!gRunning[mode]) {return;};
-            
+
         analyser.getByteFrequencyData(dataArray);
-        
+
         if (nudge) {
             // Scroll spectrum across screen
             const scrollImageObj = specCanvasCtx.getImageData(1, 0, canvasElem.width, canvasElem.height);
             specCanvasCtx.putImageData(scrollImageObj, 0, 0);
-            
+
             // Plot new spectrum line
             for (let y = 0; y < fftRange; y++) {
                 const index = ((gParams.freqInvert.value)?(y):(fftRange - y - 1 )) + fftStart;
@@ -231,25 +247,25 @@ function spectrogram(ctx, canvasName, mode) {
                 }, gParams.scrollMs.value);
             }
         }
-        
+
         if (gRunning[mode]) {drawVisual = requestAnimationFrame(drawSpectrum);}
     }
     drawVisual = requestAnimationFrame(drawSpectrum);
-    
+
     return analyser;
 }
 
 function txSpectrum() {
-    
+
     const analyserNode = spectrogram(gTxAudioCtx, "specplotout", "tx");
     sines(analyserNode);
     analyserNode.connect(gTxAudioCtx.destination);
 }
 
 function rxSpectrum (stream) {
-    
+
     const mic = gRxAudioCtx.createMediaStreamSource(stream);
-    
+
     const analyserNode = spectrogram(gRxAudioCtx, "specplotin", "rx");
     mic.connect(analyserNode);
 }
@@ -282,7 +298,7 @@ function grabMic () {
 
 function encode() {
     const endMarginPix = 10;
-    
+
     if (gTextElem.value !== "") {
         textRender(false);
     }
@@ -291,7 +307,7 @@ function encode() {
     console.assert(gParams.resolution.value == gInputTextCanvasElem.height, "Resolution must match text canvas height");
     let x = 0;
     let prevscan = false;
-    
+
     // Find end of text
     let textEnd = 0;
     let pixActive = false;
@@ -314,7 +330,7 @@ function encode() {
         // Scroll spectrum across screen
         if (nudge) {
             const scrollImageObj = gTextCanvasCtx.getImageData(1, 0, gInputTextCanvasElem.width, gParams.resolution.value);
-            gTextCanvasCtx.putImageData(scrollImageObj, 0, 0);       
+            gTextCanvasCtx.putImageData(scrollImageObj, 0, 0);
             // Get line to scan
             let scanLine = gTextCanvasCtx.getImageData(0, 0, 1, gParams.resolution.value);
             for (let y = 0; y < gParams.resolution.value; y++) {
@@ -349,7 +365,7 @@ function encode() {
 
 function textRender(event) {
     if (gPasted) {return;}
-    
+
     let text = gTextElem.value;
     gTextCanvasCtx.clearRect(0, 0, gInputTextCanvasElem.width, gInputTextCanvasElem.height);
     gTextCanvasCtx.fillStyle = "white";
@@ -368,7 +384,7 @@ function endEncode () {
 
 function endDecode () {
     gRxAudioCtx.close();
-    gRxAudioCtx = null;   
+    gRxAudioCtx = null;
 }
 
 function pasteImage(e) {
@@ -397,27 +413,27 @@ function pasteImage(e) {
 
 function sizeElements () {
     const boxWidth = window.innerWidth * gBoxWidthScale;
-    
+
     document.getElementById("specplotin").width = boxWidth;
     document.getElementById("specplotin").style.backgroundColor = "black";
     document.getElementById("specplotout").width = boxWidth;
     document.getElementById("specplotout").style.backgroundColor = "black";
-    
+
     gInputTextCanvasElem = document.getElementById("inputcanvas");
     gInputTextCanvasElem.height = gParams.resolution.value;
     gInputTextCanvasElem.width = boxWidth;
     gInputTextCanvasElem.style.backgroundColor = "black";
-    
+
     gTextElem = document.getElementById("inputtext");
     gTextMaxChars = Math.floor((boxWidth / gTextPixSize) * 1.5);
-    gTextElem.setAttribute('size', gTextMaxChars.toString());
-  
+    gTextElem.setAttribute('cols', gTextMaxChars.toString());
+    gTextElem.style.fontSize = gParams.textSize.value.toString() + "em";
 }
 
 function reSizeElements () {
     if (gResizeBusy) {return;}
     gResizeBusy = true;
-    
+
     // Prevent too much activity by limiting to once every gResizeHoldoffMs
     setTimeout(function() {
         sizeElements ();
@@ -427,7 +443,7 @@ function reSizeElements () {
 
 function stateUpdateService () {
     // Check display and engine state is up to date
-    
+
     let prevRunningState = false;
     setInterval(function () {
         if (gParamUpdate) {
@@ -439,26 +455,30 @@ function stateUpdateService () {
 
         let runningState = gRunning.tx || gRunning.rx;
         if (runningState !== prevRunningState) {
-            let sliders = document.getElementsByClassName("slider"), numSliders = sliders.length;        
+            let sliders = document.getElementsByClassName("slider"), numSliders = sliders.length;
             for (let i = 0; i < numSliders; i++) {
                 sliders[i].disabled = runningState;
             }
             prevRunningState = runningState;
         }
-            
+
         if (gRunning.tx) {
             document.getElementById("txButton").style.visibility = "hidden";
-            document.getElementById("txAbortButton").style.visibility = "visible";            
+            document.getElementById("pasteBlockButton").style.visibility = "hidden";
+            document.getElementById("uploadBlockButton").style.visibility = "hidden";
+            document.getElementById("txAbortButton").style.visibility = "visible";
         } else {
+            document.getElementById("pasteBlockButton").style.visibility = "visible";
+            document.getElementById("uploadBlockButton").style.visibility = "visible";
             document.getElementById("txButton").style.visibility = "visible";
             document.getElementById("txAbortButton").style.visibility = "hidden";
         }
         if (gRunning.rx) {
             document.getElementById("rxButton").style.visibility = "hidden";
-            document.getElementById("rxStopButton").style.visibility = "visible";            
+            document.getElementById("rxStopButton").style.visibility = "visible";
         } else {
             document.getElementById("rxButton").style.visibility = "visible";
-            document.getElementById("rxStopButton").style.visibility = "hidden";            
+            document.getElementById("rxStopButton").style.visibility = "hidden";
         }
     }, 100);
 }
@@ -476,18 +496,17 @@ window.onload = function () {
     window.addEventListener('paste', pasteImage);
     window.addEventListener("orientationchange", reSizeElements);
     window.addEventListener("resize", reSizeElements);
-    
+
     gTextCanvasCtx = gInputTextCanvasElem.getContext("2d", {willReadFrequently: true});
-    
+
     document.getElementById("txAbortButton").style.visibility = "hidden";
     document.getElementById("rxStopButton").style.visibility = "hidden";
-
 }
 
 function send() {
     if (gRunning.tx) {return;}
     gRunning.tx = true;
-    
+
     gTxAudioCtx = new AudioContext();
     txSpectrum();
     encode();

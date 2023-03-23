@@ -4,151 +4,185 @@
         <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
         <meta http-equiv="Pragma" content="no-cache" />
         <meta http-equiv="Expires" content="0" />
-        <script src="js/text2spec.js?v4"></script>
         <link rel="stylesheet" href="css/text2spec.css?v3">
+        <script src="js/text2spec.js?v4"></script>
     </head>
-    <body id="body">
-        <table id="mainTable">
-            <tr>
-                <td class="labelText" colspan="2">
-                    Enter text here
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2"> 
-                    <input type="text" id="inputtext">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <button type="button" id="txButton" class="txButton" onclick="send();">Send TX</button>
-                </td>
-                <td>
-                    <button type="button" id="txAbortButton" class="txAbortButton" onclick="sendAbort();">Abort TX</button>
-                </td>            
-            </tr>
-            <tr>
-                <td class="labelText" colspan="2">
-                    Text preview or paste images here
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <canvas id="inputcanvas" width="80" height="100" class="canvas"></canvas>
-                </td>
-            </tr>
-            <tr>
-                <td class="labelText" colspan="2"> 
-                TX spectrum monitor
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                <canvas id="specplotout" width="80" height="100" class="canvas"></canvas>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <button type="button" id="rxButton" class="rxButton" onclick="receive();">Start RX</button>
-                </td>
-                <td>
-                    <button type="button" id="rxStopButton" class="rxStopButton" onclick="receiveStop();">Stop RX</button>
-                </td>        
-            </tr>
-            <tr>
-                <td class="labelText" colspan="2">
-                    RX spectrum
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <canvas id="specplotin" width="80" height="100" class="canvas"></canvas>
-                </td>
-            </tr>
-        </table>
-        <div id="options">
+    <body>
+        <div id="mainDiv"
             <form action="">
-                <table id="optionsTable">
+                <table id="textInputTable"
                     <tr>
-                        <td class="labelText">
-                            Start Frequency Hz
+                        <td class="labelText" colspan="2">
+                            Enter text here
                         </td>
-                        <td class="paramControl">
-                            <input type="range" min="1" max="100" value="50" class="slider" id="startFreqHzSlide" oninput="changeParams();">
-                        </td>
-                        <td class="paramValue">
-                            <span id="startFreqHzValue">-</span>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <textarea type="text" id="inputtext"></textarea>
                         </td>
                     </tr>
                     <tr>
                         <td class="labelText">
-                            Stop Frequency Hz
+                            Text size
                         </td>
                         <td class="paramControl">
-                            <input type="range" min="1" max="100" value="50" class="slider" id="stopFreqHzSlide" oninput="changeParams();">
+                            <input type="range" min="0.2" max="10" value="3" class="slider" id="textSizeSlide" oninput="changeParams();">
                         </td>
                         <td class="paramValue">
-                            <span id="stopFreqHzValue">-</span>
+                            <span id="textSizeValue">-</span>
                         </td>
                     </tr>
                     <tr>
                         <td class="labelText">
-                            Resolution
+                            Text chars width
                         </td>
                         <td class="paramControl">
-                            <input type="range" min="1" max="100" value="50" class="slider" id="resolutionSlide" oninput="changeParams();">
+                            <input type="range" min="3" max="100" value="20" class="slider" id="textWidthSlide" oninput="changeParams();">
                         </td>
                         <td class="paramValue">
-                            <span id="resolutionValue">-</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="labelText">
-                            Scroll step ms
-                        </td>
-                        <td class="paramControl">
-                            <input type="range" min="1" max="100" value="50" class="slider" id="scrollMsSlide" oninput="changeParams();">
-                        </td>
-                        <td class="paramValue">
-                            <span id="scrollMsValue">-</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="labelText">
-                            Spectrum Gamma
-                        </td>
-                        <td class="paramControl">
-                            <input type="range" min="1" max="100" value="50" class="slider" name="gammaSlide" id="gammaSlide" oninput="changeParams();">
-                        </td>
-                        <td class="paramValue">
-                            <span id="gammaValue">-</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="labelText">
-                            Frequncy Invert
-                        </td>
-                        <td class="paramControl">
-                            <input type="range" min="0" max="1" value="0" class="slider" id="freqInvertSlide" oninput="changeParams();">
-                        </td>
-                        <td class="paramValue">
-                            <span id="freqInvertValue">-</span>
-                        </td>
-                    </tr>
-                    <tr style="display: none;">
-                        <td class="labelText">
-                            Scan Reverse
-                        </td>
-                        <td class="paramControl">
-                            <input type="range" min="1" max="100" value="50" class="slider" id="scanReverseSlide" oninput="changeParams();">
-                        </td>
-                        <td class="paramValue">
-                            <span id="scanReverseValue">-</span>
+                            <span id="textWidthValue">-</span>
                         </td>
                     </tr>
                 </table>
             </form>
+            <table id="mainTable">
+                <tr>
+                    <td>
+                        <button type="button" id="txButton" class="txButton" onclick="send();">Send TX</button>
+                    </td>
+                    <td>
+                        <button type="button" id="txAbortButton" class="txAbortButton" onclick="sendAbort();">Abort TX</button>
+                    </td>
+                    <td>
+                        <button type="button" id="pasteBlockButton" class="pasteBlockButton" onclick="pasteText();">&darr;Fix text</button>
+                    </td>
+                    <td>
+                        <button type="button" id="uploadBlockButton" class="uploadBlockButton" onclick="uploadImage();">Upload image</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="labelText" colspan="4">
+                        Text preview or paste images here
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4">
+                        <canvas id="inputcanvas" width="80" height="100" class="canvas"></canvas>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="labelText" colspan="4">
+                    TX spectrum monitor
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4">
+                    <canvas id="specplotout" width="80" height="100" class="canvas"></canvas>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="3">
+                        <button type="button" id="rxButton" class="rxButton" onclick="receive();">Start RX</button>
+                    </td>
+                    <td colspan="1">
+                        <button type="button" id="rxStopButton" class="rxStopButton" onclick="receiveStop();">Stop RX</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="labelText" colspan="4">
+                        RX spectrum
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <canvas id="specplotin" width="80" height="100" class="canvas"></canvas>
+                    </td>
+                </tr>
+            </table>
+            <div id="options">
+                <form action="">
+                    <table id="optionsTable">
+                        <tr>
+                            <td class="labelText">
+                                Start Frequency Hz
+                            </td>
+                            <td class="paramControl">
+                                <input type="range" min="1" max="100" value="50" class="slider" id="startFreqHzSlide" oninput="changeParams();">
+                            </td>
+                            <td class="paramValue">
+                                <span id="startFreqHzValue">-</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="labelText">
+                                Stop Frequency Hz
+                            </td>
+                            <td class="paramControl">
+                                <input type="range" min="1" max="100" value="50" class="slider" id="stopFreqHzSlide" oninput="changeParams();">
+                            </td>
+                            <td class="paramValue">
+                                <span id="stopFreqHzValue">-</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="labelText">
+                                Resolution
+                            </td>
+                            <td class="paramControl">
+                                <input type="range" min="1" max="100" value="50" class="slider" id="resolutionSlide" oninput="changeParams();">
+                            </td>
+                            <td class="paramValue">
+                                <span id="resolutionValue">-</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="labelText">
+                                Scroll step ms
+                            </td>
+                            <td class="paramControl">
+                                <input type="range" min="1" max="100" value="50" class="slider" id="scrollMsSlide" oninput="changeParams();">
+                            </td>
+                            <td class="paramValue">
+                                <span id="scrollMsValue">-</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="labelText">
+                                Spectrum Gamma
+                            </td>
+                            <td class="paramControl">
+                                <input type="range" min="1" max="100" value="50" class="slider" name="gammaSlide" id="gammaSlide" oninput="changeParams();">
+                            </td>
+                            <td class="paramValue">
+                                <span id="gammaValue">-</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="labelText">
+                                Frequncy Invert
+                            </td>
+                            <td class="paramControl">
+                                <input type="range" min="0" max="1" value="0" class="slider" id="freqInvertSlide" oninput="changeParams();">
+                            </td>
+                            <td class="paramValue">
+                                <span id="freqInvertValue">-</span>
+                            </td>
+                        </tr>
+                        <tr style="display: none;">
+                            <td class="labelText">
+                                Scan Reverse
+                            </td>
+                            <td class="paramControl">
+                                <input type="range" min="1" max="100" value="50" class="slider" id="scanReverseSlide" oninput="changeParams();">
+                            </td>
+                            <td class="paramValue">
+                                <span id="scanReverseValue">-</span>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
         </div>
     </body>
 </html>
-</html>
+
