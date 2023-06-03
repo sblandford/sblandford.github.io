@@ -1,10 +1,14 @@
+let gFreq = 741;
+let gFade = 0.003;
+let gVolume = 50;
+
 let gAudioCtx = null;
 let gGain = null;
 let gOscillator = null;
-let gFreq = 741;
-let gFade = 0.003;
+let gButton = null;
 
 window.onload = function() {
+    gButton = document.getElementById("key");
 }
 
 function keyOn() {
@@ -25,11 +29,14 @@ function keyOn() {
         
         gOscillator.start();
     }
-    gGain.setTargetAtTime(1, gAudioCtx.currentTime, gFade);
+    gGain.setTargetAtTime(gVolume / 100, gAudioCtx.currentTime, gFade);
+    gButton.classList.add("keyDown");
+
 }
 
 function keyOff() {
     gGain.setTargetAtTime(0, gAudioCtx.currentTime, gFade);
+    gButton.classList.remove("keyDown");
 }
 
 
