@@ -35,12 +35,13 @@ function keyOn() {
         gOscillator.connect(gainNode);
         gainNode.connect(gAudioCtx.destination);
         gGain = gainNode.gain;
-        
+        gGain.setTargetAtTime(0, gAudioCtx.currentTime, gFade);
         gOscillator.start();
     }
-    gGain.setTargetAtTime(gVolume / 100, gAudioCtx.currentTime, gFade);
-    gButton.classList.add("keyDown");
-
+    gAudioCtx.resume().then(() => {
+        gGain.setTargetAtTime(gVolume / 100, gAudioCtx.currentTime, gFade);
+        gButton.classList.add("keyDown");
+    });
 }
 
 function keyOff() {
