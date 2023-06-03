@@ -9,6 +9,15 @@ let gButton = null;
 
 window.onload = function() {
     gButton = document.getElementById("key");
+
+    document.addEventListener("keydown", function(e) {
+        if (e.key === " ") {
+            keyOn();
+        }
+      });
+      document.addEventListener("keyup", function(e) {
+        keyOff();
+      });
 }
 
 function keyOn() {
