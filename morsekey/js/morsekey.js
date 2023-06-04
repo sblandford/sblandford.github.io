@@ -38,23 +38,33 @@ function startOsc () {
     gOscillator.start();
 }
 
-function keyOn(isMouse) {
-    if (!gAudioCtx && isMouse) {
-        startOsc();
-    }
+function tone(sound) {
+    gGain.setTargetAtTime((sound?gVolume:0) / 100, gAudioCtx.currentTime, gFade);
+}
+
+function getGoing(sound) {
     if (gAudioCtx) {
-        gGain.setTargetAtTime(gVolume / 100, gAudioCtx.currentTime, gFade);
-        gButton.classList.add("keyDown");
+        if (gAudioCtx.state === "suspended") {
+            gAudioCtx.resume().then(() => {
+                tone(sound);
+            });
+        } else {
+            tone(sound);
+        }
+    } else {
+        startOsc();
+        tone(sound);
     }
+}
+
+function keyOn(isMouse) {
+    if (isMouse) {
+        getGoing(true);
+    }
+    gButton.classList.add("keyDown");
 }
 
 function keyOff() {
-    if (!gAudioCtx) {
-        startOsc();
-    }
-    gGain.setTargetAtTime(0, gAudioCtx.currentTime, gFade);
+    getGoing(false);
     gButton.classList.remove("keyDown");
 }
-
-
-
