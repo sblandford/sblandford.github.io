@@ -20,32 +20,41 @@ window.onload = function() {
       });
 }
 
-function keyOn() {
-    if (!gAudioCtx) {
-        gAudioCtx = new AudioContext();
-        // create Oscillator node
-        gOscillator = gAudioCtx.createOscillator();
-        const gainNode = gAudioCtx.createGain();
-        
-        gOscillator.type = "sine";
-        gOscillator.frequency.value = gFreq;
+function startOsc () {
+    gAudioCtx = new AudioContext();
+    // create Oscillator node
+    gOscillator = gAudioCtx.createOscillator();
+    const gainNode = gAudioCtx.createGain();
     
-        gainNode.gain.value = 0;
-                
-        gOscillator.connect(gainNode);
-        gainNode.connect(gAudioCtx.destination);
-        gGain = gainNode.gain;
-        
-        gOscillator.start();
-    }
-    gGain.setTargetAtTime(gVolume / 100, gAudioCtx.currentTime, gFade);
-    gButton.classList.add("keyDown");
+    gOscillator.type = "sine";
+    gOscillator.frequency.value = gFreq;
 
+    gainNode.gain.value = 0;
+            
+    gOscillator.connect(gainNode);
+    gainNode.connect(gAudioCtx.destination);
+    gGain = gainNode.gain;
+    
+    gOscillator.start();
+}
+
+function keyOn(isMouse) {
+    if (!gAudioCtx && isMouse) {
+        startOsc();
+    }
+    if (gAudioCtx) {
+        gGain.setTargetAtTime(gVolume / 100, gAudioCtx.currentTime, gFade);
+        gButton.classList.add("keyDown");
+    }
 }
 
 function keyOff() {
+    if (!gAudioCtx) {
+        startOsc();
+    }
     gGain.setTargetAtTime(0, gAudioCtx.currentTime, gFade);
     gButton.classList.remove("keyDown");
 }
+
 
 

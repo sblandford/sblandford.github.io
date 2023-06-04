@@ -4,7 +4,7 @@
         <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
         <meta http-equiv="Pragma" content="no-cache" />
         <meta http-equiv="Expires" content="0" />
-        <script src="js/morsekey.js?v4"></script>
+        <script src="js/morsekey.js?v5"></script>
         <link rel="stylesheet" href="css/morsekey.css?v3">
     </head>
     <body id="body">
@@ -13,7 +13,7 @@
         </div>
         <div class="cellDiv">
             <div id="armature"></div>
-            <div id="key" onmousedown="keyOn();" ontouchstart="keyOn();" onmouseup="keyOff();" ontouchend="keyOff();"></div>
+            <div id="key" onmousedown="keyOn(true);" ontouchstart="keyOn(false);" onmouseup="keyOff();" ontouchend="keyOff();"></div>
         </div>
     </body>
 </html>
