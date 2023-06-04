@@ -58,7 +58,7 @@ function getGoing(sound) {
 }
 
 function keyOn(isMouse) {
-    if (isMouse) {
+    if (isMouse || gAudioCtx) {
         getGoing(true);
     }
     gButton.classList.add("keyDown");
