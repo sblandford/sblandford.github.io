@@ -19,15 +19,15 @@ body {
 }
 @media (orientation: landscape) {
     .cellDiv {
-        width: 49vw;
-        height: 98vh;
+        width: 48vw;
+        height: 96vh;
 
     }
 }
 @media (orientation: portrait) {
     .cellDiv {
-        width: 98vh;
-        height: 49vh;
+        width: 96vh;
+        height: 48vh;
     }
 }
 
